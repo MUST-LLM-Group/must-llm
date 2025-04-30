@@ -5,18 +5,31 @@ fn main() {
     let matches = Command::new("must-llm")
         .version("0.1.0")
         .author("Your Name <your.email@example.com>")
-        .about("Executes the given command")
+        .about("Executes the given command or runs diagnostic commands")
         .arg(
             Arg::new("command")
                 .help("The command to execute")
-                .required(true)
+                .required(false) // No longer required because we have another subcommand
                 .num_args(1..), // Accepts one or more values
+        )
+        .subcommand(
+            Command::new("doctor")
+                .about("Runs diagnostic commands")
+            // No arguments for doctor subcommand for now
         )
         .get_matches();
 
-    if let Some(command) = matches.get_many::<String>("command") {
-        let command_parts: Vec<String> = command.map(|s| s.to_string()).collect();
-        execute_command(&command_parts);
+    match matches.subcommand() {
+        Some(("doctor", _)) => {
+            // Run the screenfetch command
+            execute_command(&["screenfetch".to_string()]);
+        }
+        _ => {
+            if let Some(command) = matches.get_many::<String>("command") {
+                let command_parts: Vec<String> = command.map(|s| s.to_string()).collect();
+                execute_command(&command_parts);
+            }
+        }
     }
 }
 
