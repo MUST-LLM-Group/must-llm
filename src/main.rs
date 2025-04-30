@@ -25,7 +25,10 @@ fn main() {
             execute_command(&["screenfetch".to_string()]);
         }
         _ => {
-            if let Some(command) = matches.get_many::<String>("command") {
+            if matches.get_many::<String>("command").is_none() {
+                // No command provided, enter a new bash environment
+                enter_bash_environment();
+            } else if let Some(command) = matches.get_many::<String>("command") {
                 let command_parts: Vec<String> = command.map(|s| s.to_string()).collect();
                 execute_command(&command_parts);
             }
@@ -47,5 +50,32 @@ fn execute_command(command_parts: &[String]) {
         println!("Command executed successfully");
     } else {
         eprintln!("Command failed with status: {}", status);
+    }
+}
+
+fn enter_bash_environment() {
+    unsafe {
+        // Set the HF_ENDPOINT environment variable
+        std::env::set_var("HF_ENDPOINT", "https://hf-mirror.com");
+    }
+
+    // Start a new bash process
+    let mut bash_command = StdCommand::new("bash");
+
+    // Modify the PS1 prompt to include "must-llm"
+    bash_command.env("PS1", "\\u:\\h (must-llm) \\$ ");
+
+    // Spawn the bash process
+    let status = bash_command
+        .spawn()
+        .expect("Failed to start bash")
+        .wait()
+        .expect("Failed to wait on bash");
+
+    // Check if the bash process was successful
+    if status.success() {
+        println!("Bash environment exited successfully");
+    } else {
+        eprintln!("Bash environment failed with status: {}", status);
     }
 }
