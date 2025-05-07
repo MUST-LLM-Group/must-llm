@@ -37,19 +37,45 @@ fn main() {
 }
 
 fn execute_command(command_parts: &[String]) {
-    // Execute the command
-    let status = StdCommand::new(&command_parts[0])
-        .args(&command_parts[1..])
-        .spawn()
-        .expect("Failed to execute command")
-        .wait()
-        .expect("Failed to wait on child");
+    // Check if the command is `pip install`
+    if command_parts.len() > 1 && command_parts[0] == "pip" && command_parts[1] == "install" {
+        // Modify the command to use the Tsinghua University source
+        let modified_command = vec![
+            "pip".to_string(),
+            "install".to_string(),
+            "-i".to_string(),
+            "https://pypi.tuna.tsinghua.edu.cn/simple".to_string(),
+        ].into_iter().chain(command_parts[2..].iter().cloned()).collect::<Vec<String>>();
 
-    // Check if the command was successful
-    if status.success() {
-        println!("Command executed successfully");
+        // Execute the modified command
+        let status = StdCommand::new(&modified_command[0])
+            .args(&modified_command[1..])
+            .spawn()
+            .expect("Failed to execute command")
+            .wait()
+            .expect("Failed to wait on child");
+
+        // Check if the command was successful
+        if status.success() {
+            println!("Command executed successfully");
+        } else {
+            eprintln!("Command failed with status: {}", status);
+        }
     } else {
-        eprintln!("Command failed with status: {}", status);
+        // Execute the original command
+        let status = StdCommand::new(&command_parts[0])
+            .args(&command_parts[1..])
+            .spawn()
+            .expect("Failed to execute command")
+            .wait()
+            .expect("Failed to wait on child");
+
+        // Check if the command was successful
+        if status.success() {
+            println!("Command executed successfully");
+        } else {
+            eprintln!("Command failed with status: {}", status);
+        }
     }
 }
 
